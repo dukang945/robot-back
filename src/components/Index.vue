@@ -2,10 +2,13 @@
   <div class="layout">
     <Layout style="height:100%">
       <Header>
-          <div class="user-msg">
-            <span>{{userName}}</span>
-            <Button type="text" @click="logOut">退出</Button>
-          </div>
+        <div class="user-msg">
+          <span>{{userName}}</span>
+          <Button
+            type="text"
+            @click="logOut"
+          >退出</Button>
+        </div>
       </Header>
       <Layout>
         <Sider
@@ -18,30 +21,53 @@
             width="auto"
             :open-names="['1']"
           >
-            <Submenu name="1">
-              <template slot="title">
+              <!-- <template slot="title">
                 <Icon type="ios-navigate"></Icon>
-                固件管理
-              </template>
+                机器人管理
+              </template> -->
+              <!-- <MenuItem
+                name="/Configuration"
+                to='Configuration'
+              >设备配置</MenuItem>
               <MenuItem
-                name="/Upload"
-                to='Upload'
-              >固件信息</MenuItem>
+                name="/Directions"
+                to='Directions'
+              >问路</MenuItem>
               <MenuItem
-                name="/History"
-                to='History'
-              >上传记录</MenuItem>
+                name="/Tutorials"
+                to='Tutorials'
+              >导览路线</MenuItem>
+
+              <MenuItem
+                name="/Meeting"
+                to='Meeting'
+              >迎宾</MenuItem>
+              <MenuItem
+                name="/Answer"
+                to='Answer'
+              >自定义问答</MenuItem>
+              <MenuItem
+                name="/Promotion"
+                to='Promotion'
+              >促销信息</MenuItem>
+              <MenuItem
+                name="/Map"
+                to='Map'
+              >地图信息</MenuItem>
             </Submenu>
             <Submenu name="2">
               <template slot="title">
-                <Icon type="ios-contact-outline" />
+                <Icon type="ios-navigate"></Icon>
                 账号管理
-              </template>
+              </template> -->
               <MenuItem
-                name="/Role"
-                to='Role'
-              >角色信息</MenuItem>
-              </Submenu>
+                name="/Equipment"
+                to='Equipment'
+              >设备管理</MenuItem>
+              <MenuItem
+                name="/Organize"
+                to='Organize'
+              >组织管理</MenuItem>
           </Menu>
         </Sider>
         <Layout :style="{padding: '0 24px 24px'}">
@@ -53,28 +79,32 @@
         </Layout>
       </Layout>
     </Layout>
-    
+
   </div>
 </template>
 
 <script>
 export default {
-  data () {
+  data() {
     return {
-      userName:sessionStorage.getItem('userName')
-    }
+      userName: sessionStorage.getItem("userName")
+    };
   },
   mounted() {
-    console.log(this.$route)
+    console.log(this.$route);
   },
   methods: {
-    logOut(){
-      this.$axios.post('/management/sysAccount/logout',this.$qs.stringify({
-        userId:sessionStorage.getItem('id')
-      })).then(res=>{
-        sessionStorage.clear();
-              this.$router.push("/Login");
-      })  
+    logOut() {
+      this.$axios
+        .post(
+          `/management/sysuser/logout?authStr=${sessionStorage.getItem(
+            "token"
+          )}`
+        )
+        .then(res => {
+          sessionStorage.clear();
+          this.$router.push("/Login");
+        });
     }
   }
 };
@@ -86,7 +116,6 @@ export default {
   background: #f5f7f9;
   position: relative;
   border-radius: 4px;
-  overflow: hidden;
   height: 100%;
 }
 .layout-logo {
@@ -107,15 +136,15 @@ export default {
 .layout-footer-center {
   text-align: center;
 }
-.user-msg{
+.user-msg {
   text-align: right;
   color: #fff;
 }
-.user-msg button{
+.user-msg button {
   margin-top: -5px;
   color: #fff;
 }
-.user-msg button:hover{
+.user-msg button:hover {
   background-color: #515a6e;
 }
 </style>

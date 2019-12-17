@@ -11,16 +11,19 @@
         alt
       >
       <div class="login-box">
+        <h3 class="login-title">讲解机器人电子后台管理系统</h3>
         <Form
           ref="formInline"
           :model="formInline"
           :rules="ruleInline"
+          @submit.native.prevent
         >
           <FormItem prop="user">
             <Input
               type="text"
               v-model="formInline.user"
               placeholder="Username"
+              size="large"
             >
             <Icon
               type="ios-person-outline"
@@ -32,7 +35,8 @@
             <Input
               type="password"
               v-model="formInline.password"
-              placeholder="Password"
+              placeholder="password"
+              size="large"
             >
             <Icon
               type="ios-lock-outline"
@@ -40,12 +44,25 @@
             ></Icon>
             </Input>
           </FormItem>
+          <FormItem prop="code"  class="messImg">
+            <Input
+              type="text"
+              v-model="formInline.code"
+              placeholder="请输入验证码"
+              size="large"
+              @keyup.enter.native="handleSubmit('formInline')"
+            
+            >
+            <img :src="this.message" alt="" slot="append" @click="getImgMessage" >
+            </Input>
+          </FormItem>
           <FormItem>
             <Button
               type="primary"
               @click="handleSubmit('formInline')"
               long
-            >登录</Button>
+              :disabled="loading"
+            >{{loginMsg}}</Button>
           </FormItem>
         </Form>
 
@@ -58,21 +75,31 @@
 // import store from "../../vuex/vuex.js";
 export default {
   data: function() {
+    var validatePass3 = (rule, value, callback) => {
+      
+      if (!value) {
+        callback(new Error("请输入账号"));
+      } else if (value.length<5) {
+        callback(new Error("账号不可少于5位字符"));
+      } else {
+        callback();
+      }
+    };
     return {
       checked: true,
+      disabled: false,
+      loading: false,
       logo: "./static/img/logo.png",
+      message: "",
+      rud:'',
+      loginMsg: "登录",
       formInline: {
         user: "",
         password: ""
       },
       ruleInline: {
-        user: [
-          {
-            required: true,
-            message: "Please fill in the user name",
-            trigger: "blur"
-          }
-        ],
+        user: [{ required: true, validator: validatePass3, trigger: "blur" }],
+        code: [{ required: true, message: '请填写验证码', trigger: "blur" }],
         password: [
           {
             required: true,
@@ -81,7 +108,7 @@ export default {
           },
           {
             type: "string",
-            min: 6,
+            min: 4,
             message: "The password length cannot be less than 6 bits",
             trigger: "blur"
           }
@@ -90,48 +117,105 @@ export default {
     };
   },
   mounted() {
+    this.getImgMessage()
   },
   methods: {
+    // 获取图片验证码
+    getImgMessage(){
+      this.$axios.get('/management/sysuser/getCodeImg',{
+          responseType: 'arraybuffer'
+        }).then(res=>{
+        if(res.status==200){
+          console.log(res)
+          this.message = 'data:image/png;base64,' + btoa(
+            new Uint8Array(res.data)
+            .reduce((data, byte) => data + String.fromCharCode(byte), '')
+          );
+          console.log(this.message)
+          this.rud = res.headers.rud
+        }
+      })
+    },
     handleSubmit(name) {
       this.$refs[name].validate(valid => {
         if (valid) {
-            this.$axios.post('/management/sysAccount/login',this.$qs.stringify({
-                loginAccount:this.formInline.user,
-                loginPassword:this.formInline.password
-            })).then(res=>{
-                console.log(res)
-                if (res.status == 200) {
+          this.loading=true
+          this.loginMsg = "登录中..."
+          this.$axios
+            .post(
+              "/management/sysuser/login",
+              this.$qs.stringify({
+                loginName: this.formInline.user,
+                password: this.formInline.password,
+                code: this.formInline.code,
+                uid:this.rud
+                
+              })
+            )
+            .then(res => {
+              console.log(res);
+              if (res.status == 200) {
                 if (res.data.code == 200) {
-                     this.$Message.success("Success!");
+                  this.$Message.success("Success!");
                   sessionStorage.setItem("token", res.data.data.authStr);
-                  sessionStorage.setItem("userName", res.data.data.sysAccount.realName);
-                  sessionStorage.setItem("id", res.data.data.sysAccount.id);
-                //   sessionStorage.setItem("permissionList", JSON.stringify(res.data.data.permissionList));
+                  sessionStorage.setItem(
+                    "userName",
+                    res.data.data.sysUser.nickName
+                  );
+                  sessionStorage.setItem("id", res.data.data.sysUser.id);
+                    // sessionStorage.setItem("permissionList", JSON.stringify(res.data.data.permissionList));
                   this.$router.push("/");
-                //   if (this.checked) {
-                //     this.setCookie(
-                //       this.ruleForm.username,
-                //       this.ruleForm.password,
-                //       30
-                //     );
-                //   } else {
-                //     this.clearCookie();
-                //   }
+                 
                 } else {
-                  this.$Message.error("账号或密码错误!");
+                  this.$Message.error(res.data.msg);
+                  this.loading=false
                 }
               } else {
                 this.$Message.error("服务器链接失败");
+                this.loading=false
               }
+            }).catch(e=>{
+              this.$Message.error("服务器链接失败");
+              this.getImgMessage()
+                this.loading=false
             });
         } else {
           console.log("error submit!!");
           return false;
         }
-            })
-         
-        
+      });
     },
+    sendCode() {
+     if(this.formInline.user){
+        this.$axios
+        .post(`/management/sysuser/sendSMS?phone=${this.formInline.user}`)
+        .then(res => {
+          if (res.status == 200) {
+            console.log(res);
+            this.formInline.password = res.data.data
+             this.$Notice.open({
+                    title: '手机验证码',
+                    desc: res.data.data,
+                    duration: 0
+                });
+            var count = 60;
+            this.message ="(" + count + ")" +"后重新发送";
+            var timeCount = setInterval(() => {
+              count = count - 1;
+              this.message = "(" + count + ")" +"后重新发送";
+              this.disabled = true;
+              if (count == 0) {
+                this.message = "获取验证码";
+                clearInterval(timeCount);
+                this.disabled = false;
+              }
+            }, 1000);
+          }
+        });
+     }else{
+       this.$Message.warning('请输入手机号')
+     }
+    }
   }
 };
 </script>
@@ -155,7 +239,7 @@ export default {
   box-shadow: 0px 4px 4px 0px rgba(31, 138, 61, 0.35);
   overflow: hidden;
   background: #fff;
-  padding: 20px
+  padding: 20px;
 }
 .ms-title {
   width: 100%;
@@ -174,10 +258,9 @@ export default {
   border-radius: 5px;
 }
 .ms-login img {
-  width: 240px;
+  width: 80px;
+  height: 34px;
   display: block;
-  margin-bottom: 40px;
-  margin-left: 70px;
 }
 .ms-content {
   padding: 16px 30px;
@@ -218,5 +301,12 @@ export default {
 }
 .el-checkbox__inner {
   border-radius: 50%;
+}
+.login-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.ivu-input-group-large .ivu-input, .ivu-input-group-large>.ivu-input-group-append, .ivu-input-group-large>.ivu-input-group-prepend:nth-of-type(2){
+  padding: 0
 }
 </style>

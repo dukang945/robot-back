@@ -1,7 +1,7 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
-import App from './App'
+import App from './app'
 import router from './router'
 import axios from 'axios'
 import qs from 'qs'
@@ -9,6 +9,9 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import iView from 'iview';
 import 'iview/dist/styles/iview.css';
+//兼容ie 的promise 处理
+import Promise from 'es6-promise'
+Promise.polyfill();
 Vue.use(ElementUI);
 Vue.use(router);
 Vue.use(iView);
@@ -36,19 +39,35 @@ router.beforeEach((to, from, next) => {
 })
 //请求头添加token
 axios.interceptors.request.use(
-  config => {
-    if (sessionStorage.getItem('token')) {
-      config.headers.authStr = sessionStorage.getItem('token');
-    }
+  // config => {
+  //   if (sessionStorage.getItem('token')) {
+  //     config.headers.authStr = sessionStorage.getItem('token');
+  //     config.headers.authStr = sessionStorage.getItem('token');
+  //   }
  
+  //   return config;
+  // },
+  // error => {
+  //   return Promise.reject(error);
+  // }
+  config => {
+    if (sessionStorage.getItem('token') && config.url.split('?')[0] !== 'https://restapi.amap.com/v3/geocode/geo') {
+      console.log(config.url.split('?')[0])
+      config.headers.authStr = sessionStorage.getItem('token');
+    }else if(config.url.split('?')[0] == 'https://restapi.amap.com/v3/geocode/geo'){
+      // config.headers.Authorization = ''
+      console.log(1)
+    }
+
     return config;
   },
   error => {
     return Promise.reject(error);
-  });
+  }
+  );
   // 响应拦截
   axios.interceptors.response.use((res) => {
-    if (res.data.code ==504) {
+    if (res.data.code ==505) {
       console.log(res)
       // this.$Message.error('token过期，请重新登录！')
       router.push("/Login")

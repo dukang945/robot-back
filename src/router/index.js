@@ -2,9 +2,8 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Index from '@/components/Index'
 import Login from '@/components/Login'
-import History from '@/components/History'
-import Upload from '@/components/Upload'
-import Role from '@/components/Role'
+import Organize from '@/components/Organize'
+import Equipment from '@/components/Equipment'
 
 Vue.use(Router)
 
@@ -14,15 +13,12 @@ export default new Router({
       name: 'index',
       component: Index,
       children:[{
-        path:'/History',
-        component:History,
-      },{
-        path:'/Upload',
-        component:Upload,
+        path:'/Organize',
+        component:Organize,
       },
       {
-        path:'/Role',
-        component:Role,
+        path:'/Equipment',
+        component:Equipment,
       },]
     },
     {
@@ -31,8 +27,8 @@ export default new Router({
       component: Login,
     },{
       path: '/',
-      component: Upload,
-      redirect:'/Upload',
+      component: Organize,
+      redirect:'/Organize',
     }
   ]
 })

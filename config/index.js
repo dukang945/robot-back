@@ -12,7 +12,10 @@ module.exports = {
     assetsPublicPath: '/',
     proxyTable: {
       '/management': {
-        target: 'http://192.168.51.60:8313',// 蔡文红
+        // target: 'http://106.14.242.200:8313',// 周阳彬
+        target: 'http://106.14.242.200:8316',// 上线
+        // target: 'http://192.168.50.165:8316',// 谢瑞
+        // target: 'http://192.168.50.163:8313',// 李庆祥
         changeOrigin: true,
         pathRewrite: {
           '^/management': '/management'

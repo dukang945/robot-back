@@ -25,7 +25,31 @@ html,body,#app{
 input, textarea, select, button {
   font-family: PingFangSC-Regular;
 }
+.ivu-layout-content{
+  position: relative;
+  padding-bottom: 40px !important;
+}
+.el-upload-list__item {
+      transition: none !important;
+    }
 .page-change{
-float: right;
+position: absolute;
+right: 0;
+bottom: 0;
+}
+.demo-table-expand {
+    font-size: 0;
+  }
+  .demo-table-expand label {
+    width: 120px;
+    color: #99a9bf !important;
+  }
+  .demo-table-expand .el-form-item {
+    margin-right: 0;
+    margin-bottom: 0;
+    width: 50%;
+  }
+  .upload .el-upload--picture-card {
+	display: none;
 }
 </style>
